@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import com.capitalshop.ecommerce.auth.dto.RegisterRequest;
 import com.capitalshop.ecommerce.user.model.enums.UserType;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -59,8 +61,11 @@ public class AuthController {
             Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
             );
+            UserAccount foundUser = userAccountRepository.findByEmail(user.getEmail()).orElse(null);
             String token = jwtUtil.generateToken(user.getEmail());
-            return ResponseHandler.generateResponse(HttpStatus.OK, "Login successful", token);
+            Map<String, Object> responseMap = Map.of("token", token, "user", foundUser);
+
+            return ResponseHandler.generateResponse(HttpStatus.OK, "Login successful", responseMap);
         } catch (AuthenticationException e) {
             return ResponseHandler.generateResponse(HttpStatus.UNAUTHORIZED, "Invalid credentials", null);
         }
