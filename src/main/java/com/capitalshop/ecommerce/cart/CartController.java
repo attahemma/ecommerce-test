@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("/auth/cart")
 public class CartController {
     private final CartService cartService;
 
@@ -16,7 +16,7 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    @PostMapping("/add/{userId}/{productId}")
+    @PostMapping("/add/{productId}")
     public ResponseEntity<Cart> addToCart(@PathVariable Long userId, @PathVariable Long productId, @RequestParam(defaultValue = "1") int quantity) {
         Cart cart = cartService.addToCart(userId, productId, quantity);
         return ResponseEntity.ok(cart);
