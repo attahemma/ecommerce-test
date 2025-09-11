@@ -1,5 +1,7 @@
 package com.capitalshop.ecommerce.cart;
 
+import com.capitalshop.ecommerce.cart.model.dto.AddToCartRequest;
+import com.capitalshop.ecommerce.cart.model.dto.CartResponse;
 import com.capitalshop.ecommerce.cart.model.entities.Cart;
 import com.capitalshop.ecommerce.cart.model.entities.CartItem;
 import com.capitalshop.ecommerce.cart.service.CartService;
@@ -16,9 +18,12 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    @PostMapping("/add/{productId}")
-    public ResponseEntity<Cart> addToCart(@PathVariable Long userId, @PathVariable Long productId, @RequestParam(defaultValue = "1") int quantity) {
-        Cart cart = cartService.addToCart(userId, productId, quantity);
+    @PostMapping("/add")
+    public ResponseEntity<CartResponse> addToCart(
+           @RequestBody AddToCartRequest request
+    ) {
+        CartResponse cart = cartService.addToCart(
+                request.getUserId(), request.getProductId(), request.getQuantity());
         return ResponseEntity.ok(cart);
     }
 
@@ -44,9 +49,13 @@ public class CartController {
     @GetMapping("/items/{userId}")
     public ResponseEntity<List<CartItem>> getAllCartItems(@PathVariable Long userId) {
         Cart cart = cartService.getCart(userId);
-        if (cart == null || cart.getItems() == null) {
-            return ResponseEntity.ok(List.of());
-        }
-        return ResponseEntity.ok(cart.getItems());
+       return null;
+    }
+
+    // update cart item quantity
+    @PutMapping("/update/{userId}/{productId}")
+    public ResponseEntity<Cart> updateCartItemQuantity(@PathVariable Long userId, @PathVariable Long productId, @RequestParam int quantity) {
+        Cart cart = cartService.updateCartItemQuantity(userId, productId, quantity);
+        return ResponseEntity.ok(cart);
     }
 }

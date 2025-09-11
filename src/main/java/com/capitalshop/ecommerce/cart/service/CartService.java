@@ -1,5 +1,6 @@
 package com.capitalshop.ecommerce.cart.service;
 
+import com.capitalshop.ecommerce.cart.model.dto.CartResponse;
 import com.capitalshop.ecommerce.cart.model.entities.Cart;
 import com.capitalshop.ecommerce.cart.model.entities.CartItem;
 import com.capitalshop.ecommerce.cart.repository.CartItemRepository;
@@ -29,7 +30,7 @@ public class CartService {
     }
 
     @Transactional
-    public Cart addToCart(Long userId, Long productId, int quantity) {
+    public CartResponse addToCart(Long userId, Long productId, int quantity) {
         UserAccount user = userAccountRepository.findById(userId).orElseThrow();
         Product product = productRepository.findById(productId).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
@@ -37,7 +38,9 @@ public class CartService {
             c.setUser(user);
             return cartRepository.save(c);
         });
-        Optional<CartItem> existingItem = cart.getItems() == null ? Optional.empty() : cart.getItems().stream().filter(i -> i.getProduct().getId().equals(productId)).findFirst();
+        // Get all items for this cart
+        List<CartItem> items = cartItemRepository.findByCart(cart);
+        Optional<CartItem> existingItem = items.stream().filter(i -> i.getProduct().getId().equals(productId)).findFirst();
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + quantity);
@@ -49,7 +52,10 @@ public class CartService {
             item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
-        return cartRepository.findById(cart.getId()).orElseThrow();
+        List<CartItem> updatedItems = cartItemRepository.findByCart(cart);
+        return CartResponse.builder()
+                .cartItemList(updatedItems)
+                .build();
     }
 
     public Cart getCart(Long userId) {
@@ -61,15 +67,30 @@ public class CartService {
     public void removeFromCart(Long userId, Long productId) {
         UserAccount user = userAccountRepository.findById(userId).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
-        cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
-        cartRepository.save(cart);
+        List<CartItem> items = cartItemRepository.findByCart(cart);
+        items.stream()
+            .filter(item -> item.getProduct().getId().equals(productId))
+            .forEach(cartItemRepository::delete);
     }
 
     @Transactional
     public void clearCart(Long userId) {
         UserAccount user = userAccountRepository.findById(userId).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
-        cart.getItems().clear();
-        cartRepository.save(cart);
+        List<CartItem> items = cartItemRepository.findByCart(cart);
+        items.forEach(cartItemRepository::delete);
+    }
+
+    public Cart updateCartItemQuantity(Long userId, Long productId, int quantity) {
+        UserAccount user = userAccountRepository.findById(userId).orElseThrow();
+        Cart cart = cartRepository.findByUser(user).orElseThrow();
+        List<CartItem> items = cartItemRepository.findByCart(cart);
+        Optional<CartItem> existingItem = items.stream().filter(i -> i.getProduct().getId().equals(productId)).findFirst();
+        if (existingItem.isPresent()) {
+            CartItem item = existingItem.get();
+            item.setQuantity(quantity);
+            cartItemRepository.save(item);
+        }
+        return cart;
     }
 }

@@ -15,7 +15,4 @@ public class Cart {
 
     @ManyToOne
     private UserAccount user;
-
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> items;
 }
