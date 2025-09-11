@@ -2,6 +2,8 @@ package com.capitalshop.ecommerce.vendor.product.service;
 
 import com.capitalshop.ecommerce.vendor.product.model.entities.Product;
 import com.capitalshop.ecommerce.vendor.product.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,10 @@ public class ProductService {
 
     public List<Product> findAll(Specification<Product> spec) {
         return productRepository.findAll(spec);
+    }
+
+    public Page<Product> findAll(Specification<Product> spec, Pageable pageable) {
+        return productRepository.findAll(spec, pageable);
     }
 
     public Optional<Product> findById(Long id) {

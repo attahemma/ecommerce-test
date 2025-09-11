@@ -1,9 +1,11 @@
-
 package com.capitalshop.ecommerce.vendor.product;
 
 import com.capitalshop.ecommerce.vendor.product.model.entities.Product;
 import com.capitalshop.ecommerce.vendor.product.service.ProductService;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/auth/products")
 public class VendorProductController {
 	private final ProductService productService;
 
@@ -22,15 +24,21 @@ public class VendorProductController {
 	}
 
 	@GetMapping
-	public List<Product> getAllProducts(
+	public Page<Product> getAllProducts(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(required = false) String productName,
+			@RequestParam(required = false) String searchTerm,
 			@RequestParam(required = false) Double minPrice,
 			@RequestParam(required = false) Double maxPrice
 	) {
 		Specification<Product> spec = (root, query, cb) -> {
 			List<Predicate> predicates = new ArrayList<>();
-			if (productName != null) {
+			if (productName != null && !productName.isEmpty()) {
 				predicates.add(cb.like(cb.lower(root.get("productName")), "%" + productName.toLowerCase() + "%"));
+			}
+			if (searchTerm != null && !searchTerm.isEmpty()) {
+				predicates.add(cb.like(cb.lower(root.get("productName")), "%" + searchTerm.toLowerCase() + "%"));
 			}
 			if (minPrice != null) {
 				predicates.add(cb.greaterThanOrEqualTo(root.get("productPrice"), minPrice));
@@ -40,7 +48,8 @@ public class VendorProductController {
 			}
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
-		return productService.findAll(spec);
+		Pageable pageable = PageRequest.of(page, size);
+		return productService.findAll(spec, pageable);
 	}
 
 	@GetMapping("/{id}")
